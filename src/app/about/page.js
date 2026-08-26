@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { Target, Eye, Lightbulb, Rocket, Users, Check, ArrowRight } from "lucide-react";
 import GlobeSection from "@/components/GlobeDemo";
 import Link from "next/link";
+import { usePageContent } from "../../hooks/usePageContent";
 
 const beliefs = [
   {
@@ -67,6 +68,13 @@ const BeliefCard = ({ belief, index }) => {
 };
 
 export default function AboutPage() {
+  const c = usePageContent("about");
+  const heroHeading = c?.heroHeading || "We Are Unwrite.";
+  const heroSubheading = c?.heroSubheading || "We merge creativity and technology to build sharper, faster, more meaningful digital experiences for brands worldwide.";
+  const missionText = c?.missionText || "To unwrite outdated digital experiences and rebuild bold, high‑performing brands for the internet age.";
+  const founderName = c?.founderName || "Adeity";
+  const founderTitle = c?.founderTitle || "Founder & Creative Director";
+  const founderBio = c?.founderBio || "With over a decade of experience in brand strategy and visual design, Adeity founded Unwrite to challenge the way brands communicate with the world.";
   return (
     <div className="min-h-screen bg-black text-white font-sans selection:bg-white selection:text-black">
       {/* Subtle Background Textures */}
@@ -88,14 +96,11 @@ export default function AboutPage() {
           </div>
 
           <h1 className="text-5xl md:text-8xl font-black mb-8 tracking-tighter leading-[0.9] uppercase">
-            Unwrite Studios is here to <br />
-            <span className="text-transparent bg-clip-text bg-gradient-to-b from-white to-neutral-500">
-              unwrite outdated systems
-            </span>
+            {heroHeading}
           </h1>
 
           <p className="text-neutral-500 text-lg md:text-xl max-w-3xl mx-auto leading-relaxed font-medium">
-            We merge creativity and technology to build sharper, faster, more meaningful digital experiences for brands worldwide.
+            {heroSubheading}
           </p>
         </motion.div>
 
@@ -105,7 +110,7 @@ export default function AboutPage() {
             <span className="text-white/30 text-xs font-black uppercase tracking-[0.2em] mb-6 block">01 / Purpose</span>
             <h3 className="text-3xl font-black uppercase tracking-tighter mb-6">Mission</h3>
             <p className="text-neutral-500 text-lg leading-relaxed font-medium">
-              To unwrite outdated digital experiences and rebuild bold, high‑performing brands for the internet age.
+              {missionText}
             </p>
           </div>
           <div className="bg-black p-12 md:p-16">

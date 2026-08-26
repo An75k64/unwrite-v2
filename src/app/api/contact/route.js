@@ -1,303 +1,100 @@
-import nodemailer from 'nodemailer';
 import { NextResponse } from 'next/server';
+import fs from 'fs';
+import path from 'path';
+
+const DATA_FILE = path.join(process.cwd(), 'data', 'messages.json');
+
+function ensureFile() {
+  const dir = path.dirname(DATA_FILE);
+  if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+  if (!fs.existsSync(DATA_FILE)) fs.writeFileSync(DATA_FILE, '[]');
+}
+
+function saveMessage(name, email, userType, message) {
+  ensureFile();
+  const existing = JSON.parse(fs.readFileSync(DATA_FILE, 'utf-8'));
+  const maxId = existing.length > 0 ? Math.max(...existing.map(m => m.id)) : 0;
+  existing.unshift({
+    id: maxId + 1,
+    name,
+    email,
+    userType,
+    message,
+    date: new Date().toISOString(),
+    read: false,
+  });
+  fs.writeFileSync(DATA_FILE, JSON.stringify(existing, null, 2));
+}
 
 export async function POST(request) {
   try {
     const body = await request.json();
     const { userType, name, email, message } = body;
 
-    // Validate required fields
     if (!userType || !name || !email || !message) {
-      return NextResponse.json(
-        { error: 'All fields are required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'All fields are required' }, { status: 400 });
     }
 
-    // Create transporter with Gmail
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: 'unwritestudios@gmail.com',
-        pass: 'lqry tccm hoza jkeo',
-      },
-    });
+    // ── Step 1: Always save message to file first ──────────────────────────
+    try {
+      saveMessage(name, email, userType, message);
+    } catch (saveErr) {
+      console.error('Failed to save message:', saveErr.message);
+    }
 
-    // Email to admin
-    const adminMailOptions = {
-      from: 'unwritestudios@gmail.com',
-      to: 'unwritestudios@gmail.com',
-      subject: `New Contact Form Submission from ${name}`,
-      html: `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <style>
-            body {
-              font-family: 'Arial', sans-serif;
-              background-color: #f4f4f4;
-              margin: 0;
-              padding: 0;
-            }
-            .container {
-              max-width: 600px;
-              margin: 40px auto;
-              background: #ffffff;
-              border-radius: 12px;
-              overflow: hidden;
-              box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            }
-            .header {
-              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-              color: white;
-              padding: 30px;
-              text-align: center;
-            }
-            .header h1 {
-              margin: 0;
-              font-size: 28px;
-              font-weight: bold;
-            }
-            .content {
-              padding: 30px;
-            }
-            .info-row {
-              margin-bottom: 20px;
-              padding-bottom: 20px;
-              border-bottom: 1px solid #e0e0e0;
-            }
-            .info-row:last-child {
-              border-bottom: none;
-              margin-bottom: 0;
-            }
-            .label {
-              font-size: 12px;
-              text-transform: uppercase;
-              color: #667eea;
-              font-weight: bold;
-              margin-bottom: 5px;
-            }
-            .value {
-              font-size: 16px;
-              color: #333;
-              line-height: 1.6;
-            }
-            .message-box {
-              background: #f8f9fa;
-              padding: 20px;
-              border-radius: 8px;
-              border-left: 4px solid #667eea;
-            }
-            .footer {
-              background: #f8f9fa;
-              padding: 20px;
-              text-align: center;
-              color: #888;
-              font-size: 14px;
-            }
-            .badge {
-              display: inline-block;
-              padding: 6px 12px;
-              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-              color: white;
-              border-radius: 20px;
-              font-size: 14px;
-              font-weight: bold;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>🎉 New Contact Form Submission</h1>
-            </div>
-            
-            <div class="content">
-              <div class="info-row">
-                <div class="label">User Type</div>
-                <div class="value">
-                  <span class="badge">${userType}</span>
-                </div>
-              </div>
+    // ── Step 2: Try sending email (non-blocking — won't fail the request) ──
+    try {
+      const nodemailer = (await import('nodemailer')).default;
 
-              <div class="info-row">
-                <div class="label">Name</div>
-                <div class="value">${name}</div>
-              </div>
+      const transporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+          user: 'unwritestudios@gmail.com',
+          pass: 'lqry tccm hoza jkeo',
+        },
+      });
 
-              <div class="info-row">
-                <div class="label">Email</div>
-                <div class="value">
-                  <a href="mailto:${email}" style="color: #667eea; text-decoration: none;">${email}</a>
-                </div>
-              </div>
-
-              <div class="info-row">
-                <div class="label">Message</div>
-                <div class="message-box">
-                  <div class="value">${message.replace(/\n/g, '<br>')}</div>
-                </div>
-              </div>
-            </div>
-
-            <div class="footer">
-              <p>This email was sent from your Unwrite Studios contact form</p>
-              <p style="margin: 5px 0;">📧 Respond directly to: <strong>${email}</strong></p>
+      await transporter.sendMail({
+        from: 'unwritestudios@gmail.com',
+        to: 'unwritestudios@gmail.com',
+        subject: `New Contact: ${name}`,
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff;padding:30px;border-radius:12px;">
+            <h2 style="color:#333;border-bottom:2px solid #667eea;padding-bottom:10px;">New Contact Form Submission</h2>
+            <p><strong>Name:</strong> ${name}</p>
+            <p><strong>Email:</strong> <a href="mailto:${email}">${email}</a></p>
+            <p><strong>Type:</strong> ${userType}</p>
+            <p><strong>Message:</strong></p>
+            <div style="background:#f8f9fa;padding:15px;border-radius:8px;border-left:4px solid #667eea;">
+              ${message.replace(/\n/g, '<br>')}
             </div>
           </div>
-        </body>
-        </html>
-      `,
-    };
+        `,
+      });
 
-    // Auto-reply email to user
-    const userMailOptions = {
-      from: 'unwritestudios@gmail.com',
-      to: email,
-      subject: 'Thank you for contacting Unwrite Studios',
-      html: `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <style>
-            body {
-              font-family: 'Arial', sans-serif;
-              background-color: #f4f4f4;
-              margin: 0;
-              padding: 0;
-            }
-            .container {
-              max-width: 600px;
-              margin: 40px auto;
-              background: #ffffff;
-              border-radius: 12px;
-              overflow: hidden;
-              box-shadow: 0 4px 20px rgba(0,0,0,0.1);
-            }
-            .header {
-              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-              color: white;
-              padding: 40px 30px;
-              text-align: center;
-            }
-            .header h1 {
-              margin: 0;
-              font-size: 32px;
-              font-weight: bold;
-            }
-            .content {
-              padding: 40px 30px;
-            }
-            .content h2 {
-              color: #333;
-              font-size: 24px;
-              margin-bottom: 20px;
-            }
-            .content p {
-              color: #666;
-              line-height: 1.8;
-              font-size: 16px;
-              margin-bottom: 15px;
-            }
-            .highlight {
-              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-              -webkit-background-clip: text;
-              -webkit-text-fill-color: transparent;
-              background-clip: text;
-              font-weight: bold;
-            }
-            .button {
-              display: inline-block;
-              padding: 14px 30px;
-              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-              color: white;
-              text-decoration: none;
-              border-radius: 25px;
-              font-weight: bold;
-              margin-top: 20px;
-            }
-            .footer {
-              background: #f8f9fa;
-              padding: 30px;
-              text-align: center;
-              color: #888;
-              font-size: 14px;
-            }
-            .social-links {
-              margin: 20px 0;
-            }
-            .social-links a {
-              color: #667eea;
-              text-decoration: none;
-              margin: 0 10px;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <h1>✨ Thank You, ${name}!</h1>
-            </div>
-            
-            <div class="content">
-              <h2>We've received your message</h2>
-              <p>
-                Thank you for reaching out to <span class="highlight">Unwrite Studios</span>. 
-                We're excited to learn more about your project!
-              </p>
-              <p>
-                Our team will review your message and get back to you within <strong>24-48 hours</strong>. 
-                In the meantime, feel free to explore our work and services.
-              </p>
-              <p>
-                If you have any urgent queries, you can reach us directly at 
-                <a href="mailto:hr.unwrite@gmail.com" style="color: #667eea; text-decoration: none;">
-                  <strong>hr.unwrite@gmail.com</strong>
-                </a>
-              </p>
-              
-              <div style="text-align: center;">
-                <a href="https://unwritestudios.com" class="button">Visit Our Website</a>
-              </div>
-            </div>
-
-            <div class="footer">
-              <p><strong>Unwrite Studios</strong></p>
-              <p>Unwriting outdated systems, building meaningful experiences</p>
-              <div class="social-links">
-                <a href="mailto:hr.unwrite@gmail.com">Email</a> |
-                <a href="https://unwritestudios.com">Website</a>
-              </div>
-              <p style="font-size: 12px; color: #aaa; margin-top: 20px;">
-                This is an automated response. Please do not reply directly to this email.
-              </p>
-            </div>
+      // Auto-reply
+      await transporter.sendMail({
+        from: 'unwritestudios@gmail.com',
+        to: email,
+        subject: 'Thank you for contacting Unwrite Studios',
+        html: `
+          <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;background:#fff;padding:40px;border-radius:12px;">
+            <h1 style="color:#333;">Thank You, ${name}!</h1>
+            <p style="color:#666;">We've received your message and will get back to you within <strong>24–48 hours</strong>.</p>
+            <p style="color:#666;">For urgent queries, reach us at <a href="mailto:hr.unwrite@gmail.com" style="color:#667eea;">hr.unwrite@gmail.com</a></p>
           </div>
-        </body>
-        </html>
-      `,
-    };
+        `,
+      });
+    } catch (emailErr) {
+      // Email failed but message is already saved — that's OK
+      console.warn('Email sending failed (message still saved):', emailErr.message);
+    }
 
-    // Send both emails
-    await transporter.sendMail(adminMailOptions);
-    await transporter.sendMail(userMailOptions);
-
-    return NextResponse.json(
-      { 
-        success: true, 
-        message: 'Email sent successfully!' 
-      },
-      { status: 200 }
-    );
+    // Always return success since message was saved
+    return NextResponse.json({ success: true, message: 'Message received!' }, { status: 200 });
 
   } catch (error) {
-    console.error('Error sending email:', error);
-    return NextResponse.json(
-      { 
-        error: 'Failed to send email. Please try again later.',
-        details: error.message 
-      },
-      { status: 500 }
-    );
+    console.error('Contact route error:', error);
+    return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500 });
   }
 }

@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { Mail, Phone, MapPin, Send, CheckCircle, AlertCircle } from "lucide-react";
+import { usePageContent } from "../../hooks/usePageContent";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -13,6 +14,13 @@ export default function ContactPage() {
   });
   const [status, setStatus] = useState("");
   const [loading, setLoading] = useState(false);
+  
+  const c = usePageContent("contact");
+  const heroHeading = c?.heroHeading || "Let's Create Something Extraordinary.";
+  const heroSubheading = c?.heroSubheading || "Ready to unwrite your digital story? Drop us a message and let's get started.";
+  const email = c?.email || "hr.unwrite@gmail.com";
+  const phone = c?.phone || "+91 6205698145";
+  const location = c?.location || "Bengaluru, India";
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -64,22 +72,22 @@ export default function ContactPage() {
     {
       icon: <Mail className="w-6 h-6 text-black" />,
       title: "Email",
-      value: "hr.unwrite@gmail.com",
-      href: "mailto:hr.unwrite@gmail.com",
-      color: "bg-white", // Changed from gradient to solid white
+      value: email,
+      href: `mailto:${email}`,
+      color: "bg-white",
     },
     {
       icon: <Phone className="w-6 h-6 text-black" />,
       title: "Phone",
-      value: "+91 6205698145",
-      href: "tel:+916205698145",
-      color: "bg-neutral-400", // Changed from blue to neutral
+      value: phone,
+      href: `tel:${phone}`,
+      color: "bg-neutral-400",
     },
     {
       icon: <MapPin className="w-6 h-6 text-black" />,
       title: "Location",
-      value: "Bengaluru, India",
-      color: "bg-neutral-600", // Changed from orange to neutral
+      value: location,
+      color: "bg-neutral-600",
     },
   ];
 
@@ -108,14 +116,11 @@ export default function ContactPage() {
             </div>
 
             <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-8 leading-tight max-w-4xl mx-auto">
-              Bring your ideas to life —{" "}
-              <span className="text-neutral-500">
-                we are just one message away
-              </span>
+              {heroHeading}
             </h1>
 
             <p className="text-xl md:text-2xl text-gray-400 max-w-3xl mx-auto font-light">
-              Ready to unwrite your digital story? Drop us a message and let's get started.
+              {heroSubheading}
             </p>
           </motion.div>
 

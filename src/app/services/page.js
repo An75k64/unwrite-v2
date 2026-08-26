@@ -4,9 +4,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Brain, Target, Users, Layout, Zap, Rocket, TrendingUp, Globe, Smartphone, MessageSquare, Bot, ArrowRight, X, Check } from "lucide-react";
 import Link from "next/link";
 import { useState, useEffect } from "react";
+import { usePageContent } from "../../hooks/usePageContent";
 
 export default function ServicesPage() {
   const [selectedService, setSelectedService] = useState(null);
+  const c = usePageContent("services");
+  const heroHeading = c?.heroHeading || "What we unwrite";
+  const heroSubheading = c?.heroSubheading || "We help brands unwrite whats outdated and rebuild what actually works.\nFrom strategy to systems, we design digital experiences with intent.\nLess noise. More clarity. Better outcomes.";
 
   useEffect(() => {
     if (selectedService) {
@@ -398,19 +402,11 @@ export default function ServicesPage() {
           </div>
           
           <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold mb-4 md:mb-6 px-4">
-            <span className="text-white">What we unwrite</span>
-            <br />
-            <span className="bg-gradient-to-r from-[#484545] text-gray-100 to-[#ffffff] text-transparent bg-clip-text">
-              for you
-            </span>
+            <span className="text-white">{heroHeading}</span>
           </h1>
           
-          <p className="text-gray-400 text-sm md:text-base lg:text-lg max-w-3xl mx-auto leading-relaxed px-4">
-            We help brands unwrite whats outdated and rebuild what actually works.
-            <br className="hidden md:block" />
-            From strategy to systems, we design digital experiences with intent.
-            <br className="hidden md:block" />
-            <span className="text-white font-medium">Less noise. More clarity. Better outcomes.</span>
+          <p className="text-gray-400 text-sm md:text-base lg:text-lg max-w-3xl mx-auto leading-relaxed px-4 whitespace-pre-wrap">
+            {heroSubheading}
           </p>
         </motion.div>
 

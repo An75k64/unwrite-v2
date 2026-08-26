@@ -16,7 +16,9 @@ export default function Navbar() {
   const navTabs = [
     { title: "Home", value: "home", href: "/" },
     { title: "Services", value: "services", href: "/services" },
-    { title: "About", value: "about", href: "/about" }
+    { title: "About", value: "about", href: "/about" },
+    { title: "Gallery", value: "gallery", href: "/gallery" },
+    { title: "Blog", value: "blog", href: "/blog" },
   ];
 
   useEffect(() => {

@@ -7,6 +7,7 @@ import { Card } from "./ui/card";
 import { Spotlight } from "./ui/spotlight";
 import { SplineScene } from "./ui/spline";
 import { MouseSpotlight } from "./ui/ibelick-spotlight";
+import { usePageContent } from "../hooks/usePageContent";
 
 const AnimatedText = () => {
   const words = ["write", "do", "ravel", "tie", "cover"];
@@ -58,6 +59,9 @@ const AnimatedText = () => {
 };
 
 export default function HeroSection() {
+  const c = usePageContent("home");
+  const subtitle = c?.heroSubheading || "Every brand has a story.";
+  const ctaText = c?.heroCTA || "Explore Services";
   return (
     <section className="relative min-h-screen bg-black overflow-hidden">
       {/* Mouse spotlight */}
@@ -100,10 +104,7 @@ export default function HeroSection() {
                 transition={{ duration: 0.8, delay: 0.2 }}
                 className="text-lg md:text-xl lg:text-2xl text-gray-300 max-w-lg mx-auto lg:mx-0 mb-10 leading-relaxed"
               >
-                Every brand has a story.
-                <span className="block mt-2 text-white/90">
-                  We unwrite the bad chapters.
-                </span>
+                {subtitle}
               </motion.p>
 
               <motion.div
@@ -114,7 +115,7 @@ export default function HeroSection() {
               >
                 <Link href="/services" className="w-full lg:w-auto">
                   <button className="w-full lg:w-auto px-10 py-4 rounded-full bg-white text-black font-bold border border-white/20 hover:bg-neutral-200 transition-all duration-300 uppercase tracking-tight text-sm">
-                    Explore Services
+                    {ctaText}
                   </button>
                 </Link>
               </motion.div>
