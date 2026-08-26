@@ -25,27 +25,52 @@ function ImageUploader({ value, onChange, label = "Image" }) {
   const [preview, setPreview] = useState(value || "");
   const [error, setError] = useState("");
 
-  const handleFile = async (file) => {
+  const handleFile = (file) => {
     if (!file) return;
     if (!file.type.startsWith("image/")) { setError("Only image files are allowed."); return; }
     setError("");
     setUploading(true);
-    try {
-      const fd = new FormData();
-      fd.append("file", file);
-      const res = await fetch("/api/upload", { method: "POST", body: fd });
-      const data = await res.json();
-      if (data.url) {
-        setPreview(data.url);
-        onChange(data.url);
-      } else {
-        setError("Upload failed. Try again.");
-      }
-    } catch {
-      setError("Upload failed. Try again.");
-    } finally {
-      setUploading(false);
-    }
+    
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const img = new window.Image();
+      img.onload = () => {
+        const canvas = document.createElement("canvas");
+        const MAX_WIDTH = 800;
+        const MAX_HEIGHT = 800;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > MAX_WIDTH) {
+            height *= MAX_WIDTH / width;
+            width = MAX_WIDTH;
+          }
+        } else {
+          if (height > MAX_HEIGHT) {
+            width *= MAX_HEIGHT / height;
+            height = MAX_HEIGHT;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Compress heavily to save localStorage space (0.7 quality WebP or JPEG)
+        const dataUrl = canvas.toDataURL("image/jpeg", 0.7);
+        setPreview(dataUrl);
+        onChange(dataUrl);
+        setUploading(false);
+      };
+      img.onerror = () => {
+        setError("Failed to read image.");
+        setUploading(false);
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
   };
 
   const handleDrop = (e) => {
